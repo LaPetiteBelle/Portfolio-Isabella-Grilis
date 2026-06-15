@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-R233WSTX3R"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-R233WSTX3R');
+  </script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#FAE8E4" />
@@ -656,6 +665,13 @@
     };
     function showAgency(id) {
       const a = agencies[id]; if (!a) return;
+      // Track click in Google Analytics
+      if (typeof gtag === 'function') {
+        gtag('event', 'agency_click', {
+          'agency_id': id,
+          'agency_name': a.name
+        });
+      }
       if (a.isCollab) {
         document.getElementById('detail-city').textContent = currentLang === 'es' ? i18n.es.bookings_euro : currentLang === 'fr' ? i18n.fr.bookings_euro : 'Bookings via Euromodel Amsterdam';
         document.getElementById('detail-name').textContent = currentLang === 'es' ? i18n.es.brand_collab : currentLang === 'fr' ? i18n.fr.brand_collab : 'Brand Collaborations & Social Media';
@@ -922,5 +938,10 @@
     window.carouselGo = carouselGo;
   }); // end DOMContentLoaded
   </script>
+  <!-- Vercel Analytics -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
