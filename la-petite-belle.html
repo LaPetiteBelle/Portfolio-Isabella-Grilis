@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="La Petite Belle">
+<title>La Petite Belle</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#FAE8E4!important;font-family:'Cormorant Garamond',serif;color:#7A3F35;min-height:100vh}
+h1{font-weight:300;font-size:2.6rem;letter-spacing:.14em;color:#A8685B;line-height:1;text-align:center;padding-top:2rem}
+.sub{font-size:.82rem;letter-spacing:.28em;font-style:italic;font-weight:300;color:#C99088;display:block;text-align:center;margin-top:.35rem}
+.divider{max-width:480px;height:.5px;background:#C99088;opacity:.5;margin:1.4rem auto}
+.tabs{display:flex;justify-content:center;max-width:480px;margin:0 auto;border-bottom:.5px solid rgba(168,104,91,.22)}
+.tab{font-family:inherit;font-size:.67rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;background:none;border:none;border-bottom:1.5px solid transparent;padding:.65rem 1.2rem .55rem;cursor:pointer;margin-bottom:-.5px}
+.tab.on{color:#7A3F35;border-bottom-color:#A8685B}
+.content{max-width:480px;margin:0 auto;padding:1.4rem 1rem 5rem}
+.panel{display:none;flex-direction:column;gap:.65rem}.panel.on{display:flex}
+.card{background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.22);border-radius:6px;padding:1rem 1.4rem;cursor:pointer;margin-bottom:.65rem}
+.add-btn{display:flex;align-items:center;justify-content:space-between;background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.35);border-radius:6px;padding:.95rem 1.4rem;cursor:pointer;font-family:inherit;color:#A8685B;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;width:100%;margin-bottom:.65rem}
+.filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.65rem}
+.sel{font-family:inherit;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:#B87A6E;background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.22);border-radius:20px;padding:.28rem .75rem;cursor:pointer;outline:none}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.kpi{background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.22);border-radius:6px;padding:1rem;text-align:center}
+.chart-card{background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.22);border-radius:6px;padding:1.2rem 1.4rem}
+.big-card{background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.35);border-radius:6px;padding:1.4rem 1.6rem;text-align:center}
+.mid-card{background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.22);border-radius:6px;padding:1rem 1.6rem;display:flex;justify-content:space-between;align-items:baseline}
+.yr-toggle{display:flex}
+.yr-btn{font-family:inherit;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.22);padding:.32rem 1rem;cursor:pointer}
+.yr-btn:first-child{border-radius:20px 0 0 20px;border-right:none}
+.yr-btn:last-child{border-radius:0 20px 20px 0}
+.yr-btn.on{background:#A8685B;color:#FFFAF8;border-color:#A8685B}
+.netto-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3rem}
+.netto-total{display:flex;justify-content:space-between;margin-top:.6rem;padding-top:.6rem;border-top:.5px solid rgba(168,104,91,.15)}
+.overlay{position:fixed;inset:0;background:rgba(250,232,228,.95);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;z-index:100;padding:1rem;overflow-y:auto}
+.overlay.on{display:flex}
+.modal{background:#FFFAF8;border:.5px solid rgba(168,104,91,.28);border-radius:6px;padding:1.8rem;width:100%;max-width:440px;margin:auto}
+.modal-hd{font-size:.67rem;letter-spacing:.32em;text-transform:uppercase;color:#B87A6E;margin-bottom:1.4rem;display:flex;justify-content:space-between;align-items:center}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem 1rem;margin-bottom:1.2rem}
+.full{grid-column:1/-1}
+.lbl{display:flex;flex-direction:column;gap:.3rem;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088}
+.inp{background:rgba(255,248,246,.6);border:.5px solid rgba(168,104,91,.22);border-radius:4px;padding:.6rem .8rem;font-family:inherit;font-size:.95rem;color:#7A3F35;outline:none;width:100%}
+.inp:focus{border-color:#C99088}
+textarea.inp{resize:vertical}
+.ai-row{display:flex;gap:.65rem;margin-bottom:1rem}
+.ai-btn{flex:1;background:rgba(168,104,91,.06);border:.5px solid rgba(168,104,91,.35);border-radius:6px;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;font-size:.75rem;letter-spacing:.14em;color:#A8685B}
+.ai-panel{background:rgba(168,104,91,.04);border:.5px solid rgba(168,104,91,.2);border-radius:6px;padding:1rem;margin-bottom:1rem;display:none}
+.ai-panel.on{display:block}
+.warn-box{background:rgba(122,63,53,.06);border:.5px solid rgba(122,63,53,.25);border-radius:4px;padding:.7rem .9rem;margin-bottom:.8rem;display:none}
+.warn-box.on{display:block}
+.net-preview{background:rgba(168,104,91,.06);border-radius:4px;padding:.6rem .8rem;display:none}
+.net-preview.on{display:block}
+.modal-ft{display:flex;justify-content:flex-end;gap:.8rem;margin-top:1.4rem;padding-top:1.2rem;border-top:.5px solid rgba(168,104,91,.15)}
+.btn-ghost{font-family:inherit;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;background:none;border:.5px solid rgba(168,104,91,.22);border-radius:20px;padding:.4rem 1.1rem;cursor:pointer}
+.btn-del{font-family:inherit;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:#7A3F35;background:none;border:.5px solid rgba(122,63,53,.3);border-radius:20px;padding:.4rem 1.1rem;cursor:pointer}
+.btn-solid{font-family:inherit;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:#FFFAF8;background:#A8685B;border:.5px solid #A8685B;border-radius:20px;padding:.4rem 1.1rem;cursor:pointer}
+.btn-solid:disabled{background:rgba(168,104,91,.3);border-color:transparent;cursor:not-allowed}
+.badge{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;border:.5px solid #C99088;border-radius:20px;padding:.18rem .65rem;color:#C99088;white-space:nowrap}
+.badge.paid{color:#7A3F35;border-color:#7A3F35}
+.badge.open{color:#B87A6E;border-color:#B87A6E}
+.ag-row{background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.22);border-radius:6px;padding:.85rem 1.4rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+.pct-inp{background:rgba(255,248,246,.6);border:.5px solid rgba(168,104,91,.22);border-radius:4px;padding:.35rem .6rem;font-family:inherit;font-size:.95rem;color:#7A3F35;outline:none;width:4.5rem;text-align:center}
+.sec-lbl{font-size:.67rem;letter-spacing:.32em;text-transform:uppercase;color:#B87A6E;text-align:center;margin-bottom:1.2rem}
+.empty{text-align:center;padding:3rem 1rem}
+.hint{font-size:.6rem;color:#C99088;font-style:italic;text-align:center;margin-top:.5rem}
+.err-box{background:rgba(122,63,53,.06);border-radius:4px;padding:.5rem .8rem;font-size:.72rem;color:#7A3F35;font-style:italic;margin-bottom:.8rem;display:none}
+.err-box.on{display:block}
+.chart-legend{display:flex;gap:1rem;justify-content:center;margin-top:.5rem}
+/* Login scherm */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-box{background:rgba(255,248,246,.9);border:.5px solid rgba(168,104,91,.28);border-radius:6px;padding:2.5rem 2rem;width:100%;max-width:360px}
+.login-title{font-weight:300;font-size:2rem;letter-spacing:.14em;color:#A8685B;text-align:center;margin-bottom:.5rem}
+.login-sub{font-size:.72rem;letter-spacing:.22em;font-style:italic;color:#C99088;text-align:center;margin-bottom:2rem}
+.login-lbl{font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;display:block;margin-bottom:.3rem;margin-top:1rem}
+.login-inp{width:100%;background:rgba(255,248,246,.6);border:.5px solid rgba(168,104,91,.22);border-radius:4px;padding:.7rem .9rem;font-family:inherit;font-size:1rem;color:#7A3F35;outline:none}
+.login-inp:focus{border-color:#C99088}
+.login-btn{width:100%;margin-top:1.5rem;font-family:inherit;font-size:.67rem;letter-spacing:.26em;text-transform:uppercase;color:#FFFAF8;background:#A8685B;border:.5px solid #A8685B;border-radius:20px;padding:.7rem;cursor:pointer}
+.login-err{font-size:.72rem;color:#7A3F35;font-style:italic;text-align:center;margin-top:.8rem;display:none}
+.login-err.on{display:block}
+.logout-btn{font-family:inherit;font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:#C99088;background:none;border:none;cursor:pointer;padding:.3rem .6rem}
+.loading{text-align:center;padding:4rem;font-style:italic;color:#C99088}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-wrap" style="display:none">
+  <div class="login-box">
+    <div class="login-title">La Petite Belle</div>
+    <div class="login-sub">Income Overview</div>
+    <label class="login-lbl">E-mailadres</label>
+    <input class="login-inp" type="email" id="login-email" placeholder="isabella@..." autocomplete="email">
+    <label class="login-lbl">Wachtwoord</label>
+    <input class="login-inp" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">Inloggen</button>
+    <div class="login-err" id="login-err">E-mail of wachtwoord onjuist</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-screen" class="loading">Laden…</div>
+
+<!-- APP -->
+<div id="app-screen" style="display:none">
+  <div style="display:flex;justify-content:flex-end;max-width:480px;margin:0 auto;padding:.8rem 1rem 0">
+    <button class="logout-btn" onclick="doLogout()">Uitloggen →</button>
+  </div>
+  <h1>La Petite Belle</h1>
+  <span class="sub">Income Overview</span>
+  <div class="divider"></div>
+  <div class="tabs">
+    <button class="tab on" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="tab" id="jobs-tab" onclick="showTab('jobs')">Jobs</button>
+    <button class="tab" onclick="showTab('settings')">Agencies</button>
+  </div>
+  <div class="content">
+    <!-- DASHBOARD -->
+    <div class="panel on" id="panel-dashboard">
+      <div class="yr-toggle">
+        <button class="yr-btn on" onclick="setYear('alle',this)">Alle</button>
+        <button class="yr-btn" onclick="setYear('2025',this)">2025</button>
+        <button class="yr-btn" onclick="setYear('2026',this)">2026</button>
+      </div>
+      <div class="big-card">
+        <div id="open-lbl" style="font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:.5rem">Nog te ontvangen</div>
+        <div id="open-amt" style="font-weight:300;font-size:2.8rem;color:#7A3F35;line-height:1">€0,00</div>
+        <div id="open-sub" style="font-size:.6rem;color:#C99088;font-style:italic;margin-top:.4rem"></div>
+      </div>
+      <div class="mid-card">
+        <span id="net-lbl" style="font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088">Netto omzet totaal</span>
+        <span id="net-val" style="font-weight:300;font-size:1.6rem;color:#A8685B">€0,00</span>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><span id="kpi-jobs" style="display:block;font-weight:300;font-size:2rem;color:#A8685B;line-height:1">0</span><span style="display:block;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;margin-top:.3rem">Jobs</span></div>
+        <div class="kpi"><span id="kpi-paid" style="display:block;font-weight:300;font-size:2rem;color:#A8685B;line-height:1">0</span><span style="display:block;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;margin-top:.3rem">Betaald</span></div>
+      </div>
+      <div class="chart-card">
+        <div style="font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:1rem">Omzet per maand (€)</div>
+        <div style="height:180px;position:relative"><canvas id="chart-month"></canvas></div>
+        <div class="chart-legend"><span style="color:#C99088;font-size:.55rem">■ Netto</span><span style="color:#A8685B;font-size:.55rem">■ Commissie</span></div>
+      </div>
+      <div class="chart-card">
+        <div style="font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:1rem">Per agency (€)</div>
+        <div id="agency-wrap" style="position:relative"><canvas id="chart-agency"></canvas></div>
+        <div class="chart-legend"><span style="color:#C99088;font-size:.55rem">■ Netto</span><span style="color:#A8685B;font-size:.55rem">■ Commissie</span></div>
+      </div>
+      <div class="chart-card">
+        <div style="font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:.8rem">Netto na commissie (€)</div>
+        <div id="netto-rows"></div>
+        <div class="netto-total">
+          <span style="font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:#C99088">Totaal netto</span>
+          <span id="netto-total" style="font-size:1.1rem;font-weight:300;color:#7A3F35">€0,00</span>
+        </div>
+      </div>
+    </div>
+    <!-- JOBS -->
+    <div class="panel" id="panel-jobs">
+      <button class="add-btn" onclick="openModal(null)"><span>Nieuwe job toevoegen</span><span>→</span></button>
+      <div class="filters">
+        <select class="sel" id="f-year" onchange="renderJobs()"><option value="">Alle jaren</option><option>2025</option><option>2026</option></select>
+        <select class="sel" id="f-status" onchange="renderJobs()"><option value="">Alle statussen</option><option>Open</option><option>Betaald</option><option>In behandeling</option></select>
+        <select class="sel" id="f-agency" onchange="renderJobs()"><option value="">Alle agencies</option></select>
+        <select class="sel" id="f-sort" onchange="renderJobs()"><option value="date-desc">Nieuwste eerst</option><option value="date-asc">Oudste eerst</option><option value="amt-desc">Hoogste bedrag</option><option value="amt-asc">Laagste bedrag</option></select>
+      </div>
+      <div id="jobs-list"></div>
+    </div>
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <div class="sec-lbl">Commissie per agency</div>
+      <div id="comm-list"></div>
+      <div class="hint">Wijzigingen worden direct opgeslagen.</div>
+      <div style="margin-top:1.8rem">
+        <div class="sec-lbl">Wisselkoersen naar €</div>
+        <div id="rate-list"></div>
+        <div class="hint">Gebruikt voor omrekening op het dashboard.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-hd"><span id="modal-title">Nieuwe job</span><button onclick="closeModal()" style="background:none;border:none;cursor:pointer;color:#C99088;font-family:inherit;font-size:1rem">✕</button></div>
+    <div class="ai-row">
+      <button class="ai-btn" onclick="toggleEmail()"><span>E-mail importeren</span><span id="email-arrow">→</span></button>
+      <button class="ai-btn" id="cs-btn" onclick="document.getElementById('cs-file').click()"><span>Callsheet uploaden</span><span>→</span></button>
+      <input type="file" id="cs-file" accept="image/*,application/pdf,.txt" style="display:none" onchange="handleFile(this)">
+    </div>
+    <div class="ai-panel" id="email-panel">
+      <textarea class="inp" id="email-txt" rows="6" placeholder="Plak hier de e-mail..."></textarea>
+      <div class="err-box" id="email-err"></div>
+      <div style="display:flex;justify-content:flex-end;gap:.6rem;margin-top:.7rem">
+        <button class="btn-ghost" onclick="toggleEmail()">Annuleren</button>
+        <button class="btn-solid" id="email-btn" onclick="runEmail()">Extraheren</button>
+      </div>
+    </div>
+    <div class="err-box" id="cs-err"></div>
+    <div class="warn-box" id="warn-box"><div style="font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:#7A3F35;margin-bottom:.4rem">Let op</div><div id="warn-items"></div></div>
+    <div class="form-grid">
+      <label class="lbl full">Agency *
+        <select class="inp" id="f-ag" onchange="onAgency()">
+          <option value="">Kies agency...</option>
+        </select>
+        <span id="ag-hint" style="font-size:.6rem;color:#B87A6E;font-style:italic"></span>
+      </label>
+      <label class="lbl">Klant<input class="inp" id="f-client" placeholder="Opdrachtgever"></label>
+      <label class="lbl">Datum *<input class="inp" type="date" id="f-date"></label>
+      <label class="lbl">Bruto *<input class="inp" type="number" id="f-amount" placeholder="0.00" min="0" step="0.01" oninput="updateNet()"></label>
+      <label class="lbl">Valuta<select class="inp" id="f-currency" onchange="updateNet()"><option>EUR</option><option>GBP</option><option>USD</option><option>CHF</option><option>AED</option><option>JPY</option></select></label>
+      <div class="net-preview full" id="net-preview">
+        <span style="font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088">Netto ontvangst</span>
+        <span id="net-preview-val" style="display:block;font-size:1.1rem;font-weight:300;color:#A8685B;margin-top:.1rem"></span>
+        <span id="net-preview-sub" style="font-size:.58rem;color:#C99088;font-style:italic"></span>
+      </div>
+      <label class="lbl full">Status<select class="inp" id="f-status-m"><option>Open</option><option>Betaald</option><option>In behandeling</option></select></label>
+      <label class="lbl full" style="flex-direction:row;align-items:center;gap:.75rem;cursor:pointer;font-size:.85rem;color:#7A3F35"><input type="checkbox" id="f-self" style="width:1rem;height:1rem;accent-color:#A8685B"> Zelf aangedragen klant</label>
+      <label class="lbl full" style="flex-direction:row;align-items:center;gap:.75rem;cursor:pointer;font-size:.85rem;color:#7A3F35"><input type="checkbox" id="f-media" style="width:1rem;height:1rem;accent-color:#A8685B"> Beeldmateriaal verzameld</label>
+      <label class="lbl full">Notities<textarea class="inp" id="f-notes" rows="2" placeholder="Optioneel…"></textarea></label>
+    </div>
+    <div id="modal-hint" style="font-size:.6rem;color:#C99088;font-style:italic;display:none">* Agency, bedrag en datum zijn verplicht</div>
+    <div class="modal-ft">
+      <button class="btn-ghost" onclick="closeModal()">Annuleren</button>
+      <button class="btn-del" id="del-btn" style="display:none" onclick="deleteJob()">Verwijderen</button>
+      <button class="btn-solid" id="save-btn" onclick="saveJob()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://oryhewldyvywywqztebj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeWhld2xkeXZ5d3l3cXp0ZWJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2Njk5ODcsImV4cCI6MjA5ODI0NTk4N30.TUpyT043BOHXvfB4NjuiZtAYCMksq9L9e5wiL7AhIpU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const SYM={EUR:'€',GBP:'£',USD:'$',CHF:'Fr',AED:'AED ',JPY:'¥'};
+const MAANDEN=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const DEF_CCY={Nevs:'GBP','One Management':'USD'};
+const BASE_AGENCIES=['Uniko','Euromodel','Select','PMA','Perfect','Le Management','Nevs','3RD','One Management','Perfect Models','Aeon'];
+
+const SEED_JOBS=[
+  {id:10001,client:'Sommer',agency:'Uniko',date:'2025-03-20',amount:2400,currency:'EUR',status:'Betaald',notes:'20 en 21-03'},
+  {id:10002,client:'Asmar',agency:'Uniko',date:'2025-04-23',amount:2000,currency:'EUR',status:'Betaald',notes:'23 en 24-04'},
+  {id:10003,client:'Nicole & Felicia',agency:'Uniko',date:'2025-04-25',amount:2000,currency:'EUR',status:'Betaald',notes:'25 en 26-04'},
+  {id:10004,client:'Beso Beach',agency:'Uniko',date:'2025-04-30',amount:1000,currency:'EUR',status:'Betaald',notes:'30-4'},
+  {id:10005,client:'Stradivarius',agency:'Uniko',date:'2025-05-07',amount:800,currency:'EUR',status:'Betaald',notes:'7-05'},
+  {id:10006,client:'Asmar',agency:'Uniko',date:'2025-05-08',amount:1000,currency:'EUR',status:'Betaald',notes:'8-05'},
+  {id:10007,client:'Stradivarius',agency:'Uniko',date:'2025-05-09',amount:800,currency:'EUR',status:'Betaald',notes:'9-05'},
+  {id:10008,client:'Stradivarius',agency:'Uniko',date:'2025-05-12',amount:1600,currency:'EUR',status:'Betaald',notes:'12 en 13-05'},
+  {id:10009,client:'Asmar',agency:'Uniko',date:'2025-05-15',amount:1000,currency:'EUR',status:'Betaald',notes:'15-5'},
+  {id:10010,client:'Stradivarius',agency:'Uniko',date:'2025-05-19',amount:1600,currency:'EUR',status:'Betaald',notes:'19 en 20-05'},
+  {id:10011,client:'Protest',agency:'Euromodel',date:'2025-05-22',amount:1500,currency:'EUR',status:'Betaald',notes:'22-5'},
+  {id:10012,client:'Feners',agency:'Uniko',date:'2025-05-23',amount:800,currency:'EUR',status:'Betaald',notes:'23-5'},
+  {id:10013,client:'La Comet',agency:'Uniko',date:'2025-05-28',amount:800,currency:'EUR',status:'Betaald',notes:'28-5'},
+  {id:10014,client:'Ivette Bridal',agency:'Uniko',date:'2025-05-29',amount:1200,currency:'EUR',status:'Betaald',notes:'29-5'},
+  {id:10015,client:'Happy Wool',agency:'Perfect',date:'2025-06-12',amount:960,currency:'EUR',status:'Betaald',notes:'12-06'},
+  {id:10016,client:'Anne-Marie',agency:'Euromodel',date:'2025-06-15',amount:2000,currency:'EUR',status:'Betaald',notes:'15-6',self_booked:true},
+  {id:10017,client:'Republique',agency:'Euromodel',date:'2025-06-17',amount:1500,currency:'EUR',status:'Betaald',notes:'17-6'},
+  {id:10018,client:'E5 Fashion',agency:'Euromodel',date:'2025-06-26',amount:1100,currency:'EUR',status:'Betaald',notes:'26-6'},
+  {id:10019,client:'Beeline for six',agency:'PMA',date:'2025-06-27',amount:3000,currency:'EUR',status:'Betaald',notes:'27-6'},
+  {id:10020,client:'Nikkie',agency:'Euromodel',date:'2025-07-02',amount:650,currency:'EUR',status:'Betaald',notes:'2-7'},
+  {id:10021,client:'Tess V',agency:'Euromodel',date:'2025-07-03',amount:1000,currency:'EUR',status:'Betaald',notes:'3-7'},
+  {id:10022,client:'La Comet',agency:'Uniko',date:'2025-07-18',amount:700,currency:'EUR',status:'Betaald',notes:'18-7'},
+  {id:10023,client:'La Comet',agency:'Uniko',date:'2025-07-22',amount:800,currency:'EUR',status:'Betaald',notes:'22-7'},
+  {id:10024,client:'Aware',agency:'Uniko',date:'2025-07-29',amount:1000,currency:'EUR',status:'Betaald',notes:'29-7'},
+  {id:10025,client:'Jaas',agency:'Uniko',date:'2025-07-29',amount:1800,currency:'EUR',status:'Betaald',notes:'29-7'},
+  {id:10026,client:'Republique',agency:'Euromodel',date:'2025-07-30',amount:1250,currency:'EUR',status:'Betaald',notes:'30-7'},
+  {id:10027,client:'River Woods',agency:'Euromodel',date:'2025-07-31',amount:900,currency:'EUR',status:'Open',notes:'31-7'},
+  {id:10028,client:'Marylise',agency:'Euromodel',date:'2025-08-21',amount:1400,currency:'EUR',status:'Betaald',notes:'21-8'},
+  {id:10029,client:'Ysabel Mora',agency:'Uniko',date:'2025-08-27',amount:4800,currency:'EUR',status:'Betaald',notes:'27 en 29-8'},
+  {id:10030,client:'Fluresk',agency:'Euromodel',date:'2025-09-03',amount:833,currency:'EUR',status:'Betaald',notes:'3-9'},
+  {id:10031,client:'Tess V',agency:'Euromodel',date:'2025-09-05',amount:900,currency:'EUR',status:'Betaald',notes:'5-9'},
+  {id:10032,client:'Tamaris',agency:'PMA',date:'2025-09-09',amount:2000,currency:'EUR',status:'Betaald',notes:'9-9'},
+  {id:10033,client:'JBC',agency:'Euromodel',date:'2025-09-12',amount:1250,currency:'EUR',status:'Betaald',notes:'12-9'},
+  {id:10034,client:'E5 Fashion',agency:'Euromodel',date:'2025-09-13',amount:1100,currency:'EUR',status:'Betaald',notes:'13-9'},
+  {id:10035,client:'Sunny Cords',agency:'Euromodel',date:'2025-09-16',amount:667,currency:'EUR',status:'Betaald',notes:'16-9'},
+  {id:10036,client:'Bieman de Haas',agency:'Euromodel',date:'2025-09-18',amount:3000,currency:'EUR',status:'Betaald',notes:'18 en 24-9'},
+  {id:10037,client:'Club République',agency:'Euromodel',date:'2025-09-25',amount:1500,currency:'EUR',status:'Betaald',notes:'25-9'},
+  {id:10038,client:'Me Fui',agency:'Select',date:'2025-09-29',amount:2500,currency:'EUR',status:'Betaald',notes:'29-9'},
+  {id:10039,client:'Sam Friday',agency:'Euromodel',date:'2025-09-30',amount:600,currency:'EUR',status:'Betaald',notes:'30-9'},
+  {id:10040,client:'Surkana',agency:'Select',date:'2025-10-14',amount:2500,currency:'EUR',status:'Open',notes:'14-10'},
+  {id:10041,client:'Clips',agency:'Select',date:'2025-10-21',amount:1300,currency:'EUR',status:'Betaald',notes:'21-10'},
+  {id:10042,client:'Liu Jo',agency:'Select',date:'2025-10-28',amount:1200,currency:'EUR',status:'Betaald',notes:'28-10'},
+  {id:10043,client:'Gaëlle Paris',agency:'Select',date:'2025-11-04',amount:1500,currency:'EUR',status:'Betaald',notes:'4-11'},
+  {id:10044,client:'Denny Main Rose',agency:'Select',date:'2025-11-13',amount:1500,currency:'EUR',status:'Betaald',notes:'13-11'},
+  {id:10045,client:'Masons',agency:'Select',date:'2025-11-25',amount:1200,currency:'EUR',status:'Betaald',notes:'25-11'},
+  {id:10046,client:'Philia Loft',agency:'Select',date:'2025-11-27',amount:1300,currency:'EUR',status:'Betaald',notes:'27-11'},
+  {id:10047,client:'Studio Baobab',agency:'Select',date:'2025-12-01',amount:1500,currency:'EUR',status:'Betaald',notes:'1-12'},
+  {id:10048,client:'Lune Active',agency:'Euromodel',date:'2025-12-09',amount:1500,currency:'EUR',status:'Open',notes:'9-12'},
+  {id:10049,client:'Bieman de Haas',agency:'Euromodel',date:'2025-12-10',amount:835,currency:'EUR',status:'Open',notes:'10-12'},
+  {id:10050,client:'Philippe Matignon',agency:'Select',date:'2025-12-11',amount:1800,currency:'EUR',status:'Betaald',notes:'11-12'},
+  {id:10051,client:'Tezenis',agency:'Select',date:'2025-12-17',amount:3000,currency:'EUR',status:'Betaald',notes:'17-12'},
+  {id:20001,client:'G-Star',agency:'Euromodel',date:'2026-01-07',amount:600,currency:'EUR',status:'Open',notes:'7-1'},
+  {id:20002,client:'HV Society',agency:'Euromodel',date:'2026-01-08',amount:1200,currency:'EUR',status:'Open',notes:'8-1'},
+  {id:20003,client:'E5',agency:'Euromodel',date:'2026-01-13',amount:1100,currency:'EUR',status:'Open',notes:'13-1'},
+  {id:20004,client:'Justin Alexander',agency:'Le Management',date:'2026-01-20',amount:3000,currency:'EUR',status:'Open',notes:'20 en 21-01'},
+  {id:20005,client:'Marylise',agency:'Euromodel',date:'2026-01-26',amount:2800,currency:'EUR',status:'Open',notes:'26 en 27-01'},
+  {id:20006,client:'Protest',agency:'Euromodel',date:'2026-02-10',amount:1500,currency:'EUR',status:'Open',notes:'10-02'},
+  {id:20007,client:'Beson / Aker',agency:'Euromodel',date:'2026-02-12',amount:2400,currency:'EUR',status:'Open',notes:'12-02'},
+  {id:20008,client:'Blackstone',agency:'Euromodel',date:'2026-02-25',amount:1400,currency:'EUR',status:'Open',notes:'25-2'},
+  {id:20009,client:'Olivia & Kate',agency:'Euromodel',date:'2026-03-02',amount:1200,currency:'EUR',status:'Open',notes:'3-2'},
+  {id:20010,client:'Lofty Manner',agency:'Euromodel',date:'2026-03-04',amount:1100,currency:'EUR',status:'Open',notes:'4-3'},
+  {id:20011,client:'Sting',agency:'Euromodel',date:'2026-03-10',amount:1250,currency:'EUR',status:'Open',notes:'10-3'},
+  {id:20012,client:'Elisabetta Polignano',agency:'Select',date:'2026-03-15',amount:3000,currency:'EUR',status:'Betaald',notes:'15 en 16-3'},
+  {id:20013,client:'Vagzalli',agency:'Euromodel',date:'2026-03-17',amount:2500,currency:'EUR',status:'Open',notes:'17-3'},
+  {id:20014,client:'Bang Bang',agency:'Euromodel',date:'2026-03-18',amount:2750,currency:'EUR',status:'Open',notes:'18 en 20-03'},
+  {id:20015,client:'Miphai',agency:'Uniko',date:'2026-03-23',amount:1400,currency:'EUR',status:'Open',notes:'23-3'},
+  {id:20016,client:'E5',agency:'Euromodel',date:'2026-04-02',amount:1100,currency:'EUR',status:'Open',notes:'2-4'},
+  {id:20017,client:'Toia',agency:'Nevs',date:'2026-04-12',amount:400,currency:'GBP',status:'Open',notes:'12-04'},
+  {id:20018,client:'Saumo',agency:'Select',date:'2026-04-17',amount:3000,currency:'EUR',status:'Betaald',notes:'17-4'},
+  {id:20019,client:'Bieman',agency:'Euromodel',date:'2026-04-22',amount:1500,currency:'EUR',status:'Open',notes:'22-4'},
+  {id:20020,client:'Elisabeth Passion',agency:'Euromodel',date:'2026-04-28',amount:5000,currency:'EUR',status:'Open',notes:'28 en 30-4'},
+  {id:20021,client:'Bieman',agency:'Euromodel',date:'2026-05-01',amount:1500,currency:'EUR',status:'Open',notes:'1-5'},
+  {id:20022,client:'PIMKIE',agency:'Perfect',date:'2026-05-04',amount:900,currency:'EUR',status:'Open',notes:'4-5'},
+  {id:20023,client:'NKN',agency:'Uniko',date:'2026-05-05',amount:1000,currency:'EUR',status:'Open',notes:'5-5'},
+  {id:20024,client:'Mustang',agency:'Uniko',date:'2026-05-06',amount:1500,currency:'EUR',status:'Open',notes:'6-5'},
+  {id:20025,client:'Cold Culture',agency:'Uniko',date:'2026-05-07',amount:1200,currency:'EUR',status:'Open',notes:'7-5'},
+  {id:20026,client:'Tackle Berry',agency:'Euromodel',date:'2026-05-10',amount:1200,currency:'EUR',status:'Open',notes:'10-5'},
+  {id:20027,client:'La Comet',agency:'Uniko',date:'2026-05-11',amount:1000,currency:'EUR',status:'Open',notes:'11-5'},
+  {id:20028,client:'Revista Clara',agency:'Uniko',date:'2026-05-27',amount:0,currency:'EUR',status:'Open',notes:'27-5'},
+  {id:20029,client:'Marc Inbane',agency:'Euromodel',date:'2026-06-08',amount:333,currency:'EUR',status:'Open',notes:'8-6'},
+  {id:20030,client:'Koala Bay',agency:'Uniko',date:'2026-06-09',amount:1200,currency:'EUR',status:'Open',notes:'9-6'},
+  {id:20031,client:'Elena Morar',agency:'Euromodel',date:'2026-06-11',amount:6000,currency:'EUR',status:'Open',notes:'11 en 12-06'},
+  {id:20032,client:'Cederico',agency:'3RD',date:'2026-06-15',amount:3500,currency:'EUR',status:'Open',notes:'15, 16 en 17-6'},
+  {id:20033,client:'Rami Kadi',agency:'Uniko',date:'2026-06-24',amount:1000,currency:'EUR',status:'Open',notes:'24-6'},
+  {id:20034,client:'Loho Pijamas',agency:'Uniko',date:'2026-06-29',amount:1200,currency:'EUR',status:'Open',notes:'29-6'},
+  {id:20035,client:'Make up factory',agency:'PMA',date:'2026-07-29',amount:6000,currency:'EUR',status:'Open',notes:'29 en 30-7'},
+  {id:20036,client:'24 sport',agency:'3RD',date:'2026-09-01',amount:4000,currency:'EUR',status:'Open',notes:'1 en 2-9'},
+];
+
+const SEED_COMM={Uniko:20,Euromodel:20,Select:40,PMA:30,Perfect:0,'Le Management':30,Nevs:21.875,'3RD':20,'One Management':20,'Perfect Models':0,Aeon:0};
+const SEED_RATES={GBP:1.18,USD:0.92,CHF:1.05,AED:0.25,JPY:0.006};
+
+let jobs=[],comm={},rates={};
+let curYear='alle',editId=null,monthChart=null,agChart=null;
+
+// Auth
+async function init(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){
+    showApp();
+    await loadData();
+  } else {
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+  }
+}
+
+async function doLogin(){
+  var email=document.getElementById('login-email').value.trim();
+  var pass=document.getElementById('login-pass').value;
+  var err=document.getElementById('login-err');
+  err.classList.remove('on');
+  const {error} = await sb.auth.signInWithPassword({email,password:pass});
+  if(error){err.classList.add('on');return;}
+  showApp();
+  await loadData();
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  location.reload();
+}
+
+function showApp(){
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+}
+
+// Data laden
+async function loadData(){
+  // Jobs
+  const {data:jobData} = await sb.from('jobs').select('*').order('date',{ascending:true});
+  if(jobData && jobData.length > 0){
+    jobs = jobData;
+  } else {
+    // Seed jobs
+    const {data:{user}} = await sb.auth.getUser();
+    const seedWithUser = SEED_JOBS.map(function(j){return Object.assign({},j,{user_id:user.id});});
+    await sb.from('jobs').insert(seedWithUser);
+    jobs = seedWithUser;
+  }
+
+  // Commissies
+  const {data:commData} = await sb.from('commissions').select('*');
+  if(commData && commData.length > 0){
+    comm={};
+    commData.forEach(function(r){comm[r.agency]=r.percentage;});
+  } else {
+    const {data:{user}} = await sb.auth.getUser();
+    const seedComm = Object.entries(SEED_COMM).map(function(e){return {agency:e[0],percentage:e[1],user_id:user.id};});
+    await sb.from('commissions').insert(seedComm);
+    comm = SEED_COMM;
+  }
+
+  // Wisselkoersen
+  const {data:rateData} = await sb.from('rates').select('*');
+  if(rateData && rateData.length > 0){
+    rates={};
+    rateData.forEach(function(r){rates[r.currency]=r.rate;});
+  } else {
+    const {data:{user}} = await sb.auth.getUser();
+    const seedRates = Object.entries(SEED_RATES).map(function(e){return {currency:e[0],rate:e[1],user_id:user.id};});
+    await sb.from('rates').insert(seedRates);
+    rates = SEED_RATES;
+  }
+
+  renderAll();
+}
+
+// Helpers
+function fmt(v,c){return(SYM[c||'EUR']||'€')+parseFloat(v||0).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtE(v){return'€'+parseFloat(v||0).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function net(a,p){var g=parseFloat(a)||0,pc=parseFloat(p)||0;return g-g*pc/100;}
+function toEur(a,c){if(!c||c==='EUR')return parseFloat(a)||0;return(parseFloat(a)||0)*(parseFloat(rates[c])||1);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function formatDate(d,n){
+  if(!d)return'';
+  var dt=new Date(d),jaar=d.slice(0,4),mn=MAANDEN[dt.getMonth()],dag=dt.getDate();
+  if(!n)return dag+' '+mn+' '+jaar;
+  var drie=n.match(/^(\d+),\s*\d+\s*en\s*(\d+)[-\/](\d+)/);
+  if(drie)return drie[1]+' t/m '+drie[2]+' '+MAANDEN[parseInt(drie[3])-1]+' '+jaar;
+  var los=n.match(/^(\d+)\s*(?:en|\/)\s*(\d+)[-\/](\d+)/);
+  if(los){var d1=parseInt(los[1]),d2=parseInt(los[2]);return(d2-d1===1?d1+' t/m '+d2:d1+' en '+d2)+' '+MAANDEN[parseInt(los[3])-1]+' '+jaar;}
+  var enk=n.match(/^(\d+)[-\/](\d+)/);
+  if(enk)return parseInt(enk[1])+' '+MAANDEN[parseInt(enk[2])-1]+' '+jaar;
+  return dag+' '+mn+' '+jaar;
+}
+function extraNote(n){if(!n)return'';return n.replace(/^[\d\s\/,]*(en|t\/m)?\s*[\d\s\/,\-]*/i,'').replace(/^[,\s·\-]+/,'').trim();}
+
+// Tabs
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('panel-'+name).classList.add('on');
+  var idx={dashboard:0,jobs:1,settings:2}[name];
+  document.querySelectorAll('.tab')[idx].classList.add('on');
+  if(name==='jobs')renderJobs();
+  if(name==='settings')renderSettings();
+  if(name==='dashboard')renderDashboard();
+}
+function setYear(y,btn){
+  curYear=y;
+  document.querySelectorAll('.yr-btn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  renderDashboard();
+}
+
+// Dashboard
+function renderDashboard(){
+  var list=curYear==='alle'?jobs:jobs.filter(function(j){return j.date&&j.date.startsWith(curYear);});
+  var agT={};
+  list.forEach(function(j){
+    var g=toEur(j.amount,j.currency),n=toEur(net(j.amount,comm[j.agency]),j.currency);
+    if(!agT[j.agency])agT[j.agency]={g:0,n:0};
+    agT[j.agency].g+=g;agT[j.agency].n+=n;
+  });
+  var byM={},byMN={};
+  list.forEach(function(j){if(!j.date)return;var m=j.date.slice(0,7);byM[m]=(byM[m]||0)+toEur(j.amount,j.currency);byMN[m]=(byMN[m]||0)+toEur(net(j.amount,comm[j.agency]),j.currency);});
+  var open=list.filter(function(j){return j.status!=='Betaald';});
+  var openNet=open.reduce(function(s,j){return s+toEur(net(j.amount,comm[j.agency]),j.currency);},0);
+  var totalNet=list.reduce(function(s,j){return s+toEur(net(j.amount,comm[j.agency]),j.currency);},0);
+  var yr=curYear==='alle'?'':curYear;
+  document.getElementById('open-lbl').textContent='Nog te ontvangen '+yr;
+  document.getElementById('open-amt').textContent=fmtE(openNet);
+  document.getElementById('open-sub').textContent=open.length+' openstaande '+(open.length===1?'job':'jobs')+' · in €';
+  document.getElementById('net-lbl').textContent='Netto omzet '+(curYear==='alle'?'totaal':curYear);
+  document.getElementById('net-val').textContent=fmtE(totalNet);
+  document.getElementById('kpi-jobs').textContent=list.length;
+  document.getElementById('kpi-paid').textContent=list.filter(function(j){return j.status==='Betaald';}).length;
+  var nr=document.getElementById('netto-rows');nr.innerHTML='';
+  Object.entries(agT).sort(function(a,b){return b[1].g-a[1].g;}).forEach(function(e){
+    var p=parseFloat(comm[e[0]])||0;
+    var row=document.createElement('div');row.className='netto-row';
+    row.innerHTML='<span style="font-size:.78rem;color:#7A3F35">'+esc(e[0])+'</span><div style="display:flex;gap:.4rem;align-items:baseline">'+(p>0?'<span style="font-size:.58rem;color:#C99088">-'+p+'%</span>':'')+'<span style="font-size:.95rem;font-weight:300;color:#A8685B">'+fmtE(e[1].n)+'</span></div>';
+    nr.appendChild(row);
+  });
+  document.getElementById('netto-total').textContent=fmtE(totalNet);
+  var mKeys=Object.keys(byM).sort();
+  var mLabels=mKeys.map(function(m){return new Date(m+'-01').toLocaleString('nl-NL',{month:'short',year:'2-digit'});});
+  renderChart('chart-month',mLabels,mKeys.map(function(m){return byMN[m]||0;}),mKeys.map(function(m){return(byM[m]||0)-(byMN[m]||0);}),false);
+  var agKeys=Object.keys(agT).sort(function(a,b){return agT[b].g-agT[a].g;});
+  document.getElementById('agency-wrap').style.height=Math.max(150,agKeys.length*40)+'px';
+  renderChart('chart-agency',agKeys,agKeys.map(function(k){return agT[k].n;}),agKeys.map(function(k){return agT[k].g-agT[k].n;}),true);
+}
+
+function renderChart(id,labels,netData,commData,horizontal){
+  var canvas=document.getElementById(id);
+  var ex=Chart.getChart(canvas);if(ex)ex.destroy();
+  new Chart(canvas,{
+    type:'bar',
+    data:{labels:labels,datasets:[{label:'Netto',data:netData,backgroundColor:'#C99088',stack:'a'},{label:'Commissie',data:commData,backgroundColor:'#A8685B',stack:'a'}]},
+    options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': €'+ctx.raw.toLocaleString('nl-NL',{minimumFractionDigits:2});}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{family:'Cormorant Garamond',size:9},color:'#C99088'}},y:{stacked:true,grid:{display:false},ticks:{font:{family:'Cormorant Garamond',size:9},color:'#7A3F35'}}}}
+  });
+}
+
+// Jobs
+function renderJobs(){
+  var fy=document.getElementById('f-year').value;
+  var fs=document.getElementById('f-status').value;
+  var fa=document.getElementById('f-agency').value;
+  var so=document.getElementById('f-sort').value;
+  var agencies=Array.from(new Set(BASE_AGENCIES.concat(jobs.map(function(j){return j.agency;})))).filter(Boolean).sort();
+  var fa_el=document.getElementById('f-agency');var cur=fa_el.value;
+  fa_el.innerHTML='<option value="">Alle agencies</option>';
+  agencies.forEach(function(a){var o=document.createElement('option');o.value=a;o.textContent=a;if(a===cur)o.selected=true;fa_el.appendChild(o);});
+  document.getElementById('jobs-tab').textContent='Jobs ('+jobs.length+')';
+  var list=jobs.filter(function(j){
+    if(fy&&!(j.date||'').startsWith(fy))return false;
+    if(fs&&j.status!==fs)return false;
+    if(fa&&j.agency!==fa)return false;
+    return true;
+  }).sort(function(a,b){
+    if(so==='date-desc')return(b.date||'').localeCompare(a.date||'');
+    if(so==='date-asc')return(a.date||'').localeCompare(b.date||'');
+    if(so==='amt-desc')return parseFloat(b.amount)-parseFloat(a.amount);
+    return parseFloat(a.amount)-parseFloat(b.amount);
+  });
+  var el=document.getElementById('jobs-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div style="font-size:1.5rem;color:rgba(168,104,91,.3);font-weight:300">—</div><p style="font-size:.72rem;letter-spacing:.18em;color:#C99088;font-style:italic;margin-top:.6rem">Geen resultaten</p></div>';return;}
+  el.innerHTML=list.map(function(j){
+    var p=parseFloat(comm[j.agency])||0,n=p?net(j.amount,p):null;
+    var bc=j.status==='Betaald'?'paid':j.status==='Open'?'open':'';
+    var ex=extraNote(j.notes);
+    return '<div class="card" onclick="openModal('+j.id+')">'
+      +'<div style="display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start"><div>'
+      +'<div style="font-size:1.05rem;color:#7A3F35">'+esc(j.client||j.agency)
+      +(j.self_booked?'<span style="margin-left:.4rem;font-size:.72rem;color:#A8685B">✓</span>':'')
+      +'<span style="margin-left:.4rem;font-size:.72rem;color:'+(j.media_collected?'#A8685B':'rgba(168,104,91,.25)')+'">◼</span></div>'
+      +(j.client?'<div style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;margin-top:.15rem">'+esc(j.agency)+'</div>':'')
+      +'</div><span class="badge '+bc+'">'+j.status+'</span></div>'
+      +'<div style="font-weight:300;font-size:1.6rem;color:#A8685B;margin-top:.4rem;line-height:1">'+fmt(j.amount,j.currency)+'</div>'
+      +(n!==null?'<div style="display:flex;gap:.5rem;align-items:baseline;margin-top:.12rem"><span style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:#C99088">-'+p+'%</span><span style="font-size:.88rem;color:#7A3F35">= '+fmt(n,j.currency)+' netto</span></div>':'')
+      +'<div style="font-size:.62rem;color:#C99088;font-style:italic;margin-top:.25rem">'+formatDate(j.date,j.notes)+(ex?' · '+esc(ex):'')+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// Settings
+function renderSettings(){
+  var agencies=Array.from(new Set(BASE_AGENCIES.concat(jobs.map(function(j){return j.agency;})))).filter(Boolean).sort();
+  document.getElementById('comm-list').innerHTML=agencies.map(function(a){
+    return '<div class="ag-row"><span style="font-size:1rem;color:#7A3F35;flex:1">'+esc(a)+'</span>'
+      +'<div style="display:flex;align-items:center;gap:.3rem"><input class="pct-inp" type="number" min="0" max="100" step="0.5" value="'+(comm[a]||'')+'" onchange="updateComm(\''+esc(a)+'\',this.value)"><span style="font-size:.75rem;color:#C99088">%</span></div></div>';
+  }).join('');
+  document.getElementById('rate-list').innerHTML=['GBP','USD','CHF','AED','JPY'].map(function(c){
+    return '<div class="ag-row"><span style="font-size:1rem;color:#7A3F35;flex:1">1 '+c+'</span>'
+      +'<div style="display:flex;align-items:center;gap:.3rem"><span style="font-size:.75rem;color:#C99088;margin-right:.2rem">€</span><input class="pct-inp" type="number" step="0.001" min="0" value="'+(rates[c]||'')+'" onchange="updateRate(\''+c+'\',this.value)"></div></div>';
+  }).join('');
+}
+
+async function updateComm(a,v){
+  comm[a]=v;
+  await sb.from('commissions').upsert({agency:a,percentage:parseFloat(v)},{onConflict:'agency'});
+  renderDashboard();
+}
+async function updateRate(c,v){
+  rates[c]=v;
+  await sb.from('rates').upsert({currency:c,rate:parseFloat(v)},{onConflict:'currency'});
+  renderDashboard();
+}
+
+// Modal
+function openModal(id){
+  editId=id;
+  var j=id?jobs.find(function(x){return x.id===id;}):null;
+  document.getElementById('modal-title').textContent=j?'Job bewerken':'Nieuwe job';
+  // Vul agency dropdown
+  var agSel=document.getElementById('f-ag');
+  var ags=Array.from(new Set(BASE_AGENCIES.concat(jobs.map(function(j){return j.agency;})))).filter(Boolean).sort();
+  agSel.innerHTML='<option value="">Kies agency...</option>'+ags.map(function(a){return '<option value="'+esc(a)+'"'+(j&&j.agency===a?' selected':'')+'>'+esc(a)+'</option>';}).join('');
+  document.getElementById('f-client').value=j?j.client:'';
+  document.getElementById('f-date').value=j?j.date:'';
+  document.getElementById('f-amount').value=j?j.amount:'';
+  document.getElementById('f-currency').value=j?j.currency:'EUR';
+  document.getElementById('f-status-m').value=j?j.status:'Open';
+  document.getElementById('f-self').checked=j?!!j.self_booked:false;
+  document.getElementById('f-media').checked=j?!!j.media_collected:false;
+  document.getElementById('f-notes').value=j?j.notes:'';
+  document.getElementById('del-btn').style.display=j?'':'none';
+  document.getElementById('modal-hint').style.display='none';
+  document.getElementById('warn-box').classList.remove('on');
+  document.getElementById('email-panel').classList.remove('on');
+  document.getElementById('email-txt').value='';
+  document.getElementById('cs-err').classList.remove('on');
+  document.getElementById('email-err').classList.remove('on');
+  onAgency(); updateNet();
+  document.getElementById('overlay').classList.add('on');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('on');}
+
+function onAgency(){
+  var ag=document.getElementById('f-ag').value;
+  var p=parseFloat(comm[ag])||0;
+  document.getElementById('ag-hint').textContent=p>0?'Commissie: '+p+'%':'';
+  if(DEF_CCY[ag])document.getElementById('f-currency').value=DEF_CCY[ag];
+  updateNet();
+}
+function updateNet(){
+  var ag=document.getElementById('f-ag').value;
+  var amt=parseFloat(document.getElementById('f-amount').value)||0;
+  var ccy=document.getElementById('f-currency').value;
+  var p=parseFloat(comm[ag])||0;
+  var prev=document.getElementById('net-preview');
+  if(p>0&&amt>0){
+    document.getElementById('net-preview-val').textContent=fmt(net(amt,p),ccy);
+    document.getElementById('net-preview-sub').textContent='Na '+p+'% commissie '+ag;
+    prev.classList.add('on');
+  } else {prev.classList.remove('on');}
+}
+
+async function saveJob(){
+  var ag=document.getElementById('f-ag').value.trim();
+  var amt=document.getElementById('f-amount').value;
+  var dt=document.getElementById('f-date').value;
+  if(!ag||!amt||!dt){document.getElementById('modal-hint').style.display='';return;}
+  var btn=document.getElementById('save-btn');
+  btn.textContent='Opslaan…';btn.disabled=true;
+  var {data:{user}} = await sb.auth.getUser();
+  var j={id:editId||Date.now(),agency:ag,client:document.getElementById('f-client').value.trim(),date:dt,amount:parseFloat(amt),currency:document.getElementById('f-currency').value,status:document.getElementById('f-status-m').value,self_booked:document.getElementById('f-self').checked,media_collected:document.getElementById('f-media').checked,notes:document.getElementById('f-notes').value.trim(),user_id:user.id};
+  await sb.from('jobs').upsert(j,{onConflict:'id'});
+  if(editId){jobs=jobs.map(function(x){return x.id===editId?j:x;});}else{jobs.push(j);}
+  btn.textContent='Opslaan';btn.disabled=false;
+  closeModal();renderJobs();renderDashboard();
+}
+
+async function deleteJob(){
+  if(!confirm('Job verwijderen?'))return;
+  await sb.from('jobs').delete().eq('id',editId);
+  jobs=jobs.filter(function(j){return j.id!==editId;});
+  closeModal();renderJobs();renderDashboard();
+}
+
+// Email AI
+function toggleEmail(){
+  var p=document.getElementById('email-panel');p.classList.toggle('on');
+  document.getElementById('email-arrow').textContent=p.classList.contains('on')?'↓':'→';
+}
+async function runEmail(){
+  var text=document.getElementById('email-txt').value.trim();
+  if(!text)return;
+  var btn=document.getElementById('email-btn');
+  var err=document.getElementById('email-err');
+  btn.textContent='Analyseren…';btn.disabled=true;err.classList.remove('on');
+  try{
+    var prompt='Extract job info from this email and return ONLY a raw JSON object with: agency, client, date (YYYY-MM-DD), location, amount (number or null), currency (EUR/GBP/USD/CHF), notes. Email: '+text;
+    var res=await window.claude.complete(prompt);
+    var raw=typeof res==='string'?res:JSON.stringify(res);
+    var s=raw.indexOf('{'),e=raw.lastIndexOf('}');
+    if(s===-1)throw new Error('Geen JSON');
+    applyData(JSON.parse(raw.slice(s,e+1)));
+    document.getElementById('email-panel').classList.remove('on');
+  }catch(e){err.textContent='Fout: '+(e.message||'onbekend');err.classList.add('on');}
+  btn.textContent='Extraheren';btn.disabled=false;
+}
+
+async function handleFile(input){
+  var file=input.files[0];if(!file)return;
+  var err=document.getElementById('cs-err');err.classList.remove('on');
+  try{
+    var text=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsText(file);});
+    var prompt='Extract job info from this callsheet and return ONLY a raw JSON object with: agency, client, date (YYYY-MM-DD), location, amount (number or null), currency (EUR/GBP/USD/CHF), notes. Callsheet: '+text;
+    var res=await window.claude.complete(prompt);
+    var raw=typeof res==='string'?res:JSON.stringify(res);
+    var s=raw.indexOf('{'),e=raw.lastIndexOf('}');
+    if(s===-1)throw new Error('Geen JSON');
+    var data=JSON.parse(raw.slice(s,e+1));
+    checkConflicts(data);applyData(data);
+  }catch(e){err.textContent='Fout: '+(e.message||'onbekend');err.classList.add('on');}
+  input.value='';
+}
+
+function checkConflicts(data){
+  var w=[];
+  jobs.forEach(function(j){
+    if(j.date===data.date&&(j.client||'').toLowerCase()===(data.client||'').toLowerCase())w.push('Mogelijk duplicaat: '+j.client+' staat al op '+j.date+'.');
+    if(j.date===data.date&&j.agency&&j.agency.toLowerCase()===(data.agency||'').toLowerCase())w.push('Al een job via '+j.agency+' op '+j.date+' ('+j.client+').');
+  });
+  var box=document.getElementById('warn-box');
+  if(!w.length){box.classList.remove('on');return;}
+  document.getElementById('warn-items').innerHTML=w.map(function(x){return '<div style="font-size:.75rem;color:#7A3F35">· '+esc(x)+'</div>';}).join('');
+  box.classList.add('on');
+}
+
+function applyData(d){
+  var agSel=document.getElementById('f-ag');
+  if(d.agency){agSel.value=d.agency;onAgency();}
+  if(d.client)document.getElementById('f-client').value=d.client;
+  if(d.date)document.getElementById('f-date').value=d.date;
+  if(d.amount!=null)document.getElementById('f-amount').value=d.amount;
+  if(d.currency)document.getElementById('f-currency').value=d.currency;
+  if(d.notes)document.getElementById('f-notes').value=d.notes;
+  updateNet();
+}
+
+function renderAll(){renderDashboard();renderJobs();}
+init();
+</script>
+</body>
+</html>
