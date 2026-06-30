@@ -73,14 +73,23 @@ textarea.inp{resize:vertical}
 .err-box{background:rgba(122,63,53,.06);border-radius:4px;padding:.5rem .8rem;font-size:.72rem;color:#7A3F35;font-style:italic;margin-bottom:.8rem;display:none}
 .err-box.on{display:block}
 .chart-legend{display:flex;gap:1rem;justify-content:center;margin-top:.5rem}
-#dash-col-1, #dash-col-2 { display:flex; flex-direction:column; gap:.65rem; }
+#panel-dashboard.on { display:flex; flex-direction:column; flex-wrap:wrap; }
+#panel-dashboard .yr-toggle { order:0; }
+#dash-col-1, #dash-col-2 { display:contents; }
+#blk-open { order:1; } #blk-netomzet { order:2; } #blk-kpis { order:3; }
+#blk-month { order:4; } #blk-agency { order:5; } #blk-netcomm { order:6; }
+#blk-open, #blk-netomzet, #blk-kpis, #blk-month, #blk-agency, #blk-netcomm { margin-bottom:.65rem; }
+#settings-col-2 { margin-top:1.8rem; }
 @media (min-width: 900px) {
   .content { max-width: 1100px !important; }
-  #panel-dashboard { display:grid; grid-template-columns: 1.1fr 1fr; gap: .9rem; align-items:start; }
+  #panel-dashboard.on { display:grid; grid-template-columns: 1.1fr 1fr; gap: .9rem; align-items:start; }
   #panel-dashboard .yr-toggle { grid-column: 1 / -1; }
+  #dash-col-1, #dash-col-2 { display:flex; flex-direction:column; gap:.65rem; }
+  #blk-open, #blk-netomzet, #blk-kpis, #blk-month, #blk-agency, #blk-netcomm { margin-bottom:0; order:initial; }
   #jobs-list { display:grid; grid-template-columns: repeat(2, 1fr); gap:.65rem; }
   #jobs-list .card { margin-bottom:0; }
-  #panel-settings { display:grid; grid-template-columns: 1fr 1fr; gap: 0 1.4rem; }
+  #panel-settings.on { display:grid; grid-template-columns: 1fr 1fr; gap: 0 1.4rem; align-items:start; }
+  #settings-col-2 { margin-top:0; }
 }
 /* Login scherm */
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
@@ -138,31 +147,31 @@ textarea.inp{resize:vertical}
         <button class="yr-btn" onclick="setYear('2026',this)">2026</button>
       </div>
       <div id="dash-col-1">
-        <div class="big-card">
+        <div class="big-card" id="blk-open">
           <div id="open-lbl" style="font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:.5rem">Nog te ontvangen</div>
           <div id="open-amt" style="font-weight:300;font-size:2.8rem;color:#7A3F35;line-height:1">€0,00</div>
         </div>
-        <div class="mid-card">
-          <span id="net-lbl" style="font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088">Netto omzet totaal</span>
-          <span id="net-val" style="font-weight:300;font-size:1.6rem;color:#A8685B">€0,00</span>
-        </div>
-        <div class="kpis">
-          <div class="kpi" onclick="showTab('jobs')" style="cursor:pointer"><span id="kpi-jobs" style="display:block;font-weight:300;font-size:2rem;color:#A8685B;line-height:1">0</span><span style="display:block;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;margin-top:.3rem">Jobs</span></div>
-          <div class="kpi" onclick="showTab('jobs');document.getElementById('f-status').value='Open';renderJobs();" style="cursor:pointer"><span id="kpi-paid" style="display:block;font-weight:300;font-size:2rem;color:#A8685B;line-height:1">0</span><span style="display:block;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;margin-top:.3rem">Openstaand</span></div>
-        </div>
-        <div class="chart-card">
+        <div class="chart-card" id="blk-month">
           <div style="font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:1rem">Omzet per maand (€)</div>
           <div style="height:180px;position:relative"><canvas id="chart-month"></canvas></div>
           <div class="chart-legend"><span style="color:#C99088;font-size:.55rem">■ Netto</span><span style="color:#A8685B;font-size:.55rem">■ Commissie</span></div>
         </div>
-      </div>
-      <div id="dash-col-2">
-        <div class="chart-card">
+        <div class="chart-card" id="blk-agency">
           <div style="font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:1rem">Per agency (€)</div>
           <div id="agency-wrap" style="position:relative"><canvas id="chart-agency"></canvas></div>
           <div class="chart-legend"><span style="color:#C99088;font-size:.55rem">■ Netto</span><span style="color:#A8685B;font-size:.55rem">■ Commissie</span></div>
         </div>
-        <div class="chart-card">
+      </div>
+      <div id="dash-col-2">
+        <div class="big-card" id="blk-netomzet">
+          <div id="net-lbl" style="font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:.5rem">Netto omzet totaal</div>
+          <div id="net-val" style="font-weight:300;font-size:2.8rem;color:#7A3F35;line-height:1">€0,00</div>
+        </div>
+        <div class="kpis" id="blk-kpis">
+          <div class="kpi" onclick="showTab('jobs')" style="cursor:pointer"><span id="kpi-jobs" style="display:block;font-weight:300;font-size:2rem;color:#A8685B;line-height:1">0</span><span style="display:block;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;margin-top:.3rem">Jobs</span></div>
+          <div class="kpi" onclick="showTab('jobs');document.getElementById('f-status').value='Open';renderJobs();" style="cursor:pointer"><span id="kpi-paid" style="display:block;font-weight:300;font-size:2rem;color:#A8685B;line-height:1">0</span><span style="display:block;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:#C99088;margin-top:.3rem">Openstaand</span></div>
+        </div>
+        <div class="chart-card" id="blk-netcomm">
           <div style="font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:#C99088;margin-bottom:.8rem">Netto na commissie (€)</div>
           <div id="netto-rows"></div>
           <div class="netto-total">
@@ -185,10 +194,12 @@ textarea.inp{resize:vertical}
     </div>
     <!-- SETTINGS -->
     <div class="panel" id="panel-settings">
-      <div class="sec-lbl">Commissie per agency</div>
-      <div id="comm-list"></div>
-      <div class="hint">Wijzigingen worden direct opgeslagen.</div>
-      <div style="margin-top:1.8rem">
+      <div id="settings-col-1">
+        <div class="sec-lbl">Commissie per agency</div>
+        <div id="comm-list"></div>
+        <div class="hint">Wijzigingen worden direct opgeslagen.</div>
+      </div>
+      <div id="settings-col-2">
         <div class="sec-lbl">Wisselkoersen naar €</div>
         <div id="rate-list"></div>
         <div class="hint">Gebruikt voor omrekening op het dashboard.</div>
@@ -499,7 +510,7 @@ function renderDashboard(){
   var mLabels=mKeys.map(function(m){return new Date(m+'-01').toLocaleString('nl-NL',{month:'short',year:'2-digit'});});
   renderChart('chart-month',mLabels,mKeys.map(function(m){return byMN[m]||0;}),mKeys.map(function(m){return(byM[m]||0)-(byMN[m]||0);}),false);
   var agKeys=Object.keys(agT).sort(function(a,b){return agT[b].g-agT[a].g;});
-  document.getElementById('agency-wrap').style.height=Math.max(150,agKeys.length*40)+'px';
+  document.getElementById('agency-wrap').style.height=Math.max(110,agKeys.length*28)+'px';
   renderChart('chart-agency',agKeys,agKeys.map(function(k){return agT[k].n;}),agKeys.map(function(k){return agT[k].g-agT[k].n;}),true);
 }
 
